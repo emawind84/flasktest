@@ -1,0 +1,9 @@
+#!/bin/bash
+
+title="flasktest"
+
+if [[ -n $1 ]]; then
+    title="$1"
+fi
+
+./idle.py -n -t "$title" &

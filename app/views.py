@@ -1,8 +1,8 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
-from flask.ext.login import login_user, logout_user, current_user, login_required
+from flask_login import login_user, logout_user, current_user, login_required, fresh_login_required
 from app import app, db, lm
-from forms import LoginForm, EditForm
-from models import User
+from app.forms import LoginForm, EditForm
+from app.models import User
 from datetime import datetime
 from flask import Blueprint
 
@@ -17,16 +17,17 @@ def givemeurl():
 @login_required
 def index():
     user = g.user
-    posts = [
-        { 
-            'author': {'nickname': 'John'}, 
-            'body': 'Beautiful day in Portland!' 
-        },
-        { 
-            'author': {'nickname': 'Susan'}, 
-            'body': 'The Avengers movie was so cool!' 
-        }
-    ]
+    # posts = [
+    #     { 
+    #         'author': {'nickname': 'John'}, 
+    #         'body': 'Beautiful day in Portland!' 
+    #     },
+    #     { 
+    #         'author': {'nickname': 'Susan'}, 
+    #         'body': 'The Avengers movie was so cool!' 
+    #     }
+    # ]
+    posts = g.user.posts
     return render_template('index.html',
                            title='Home',
                            user=user,
@@ -34,7 +35,7 @@ def index():
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if g.user is not None and g.user.is_authenticated():
+    if g.user is not None and g.user.is_authenticated:
         return redirect(url_for('.index'))
     form = LoginForm()
     if form.validate_on_submit():
@@ -42,8 +43,9 @@ def login():
 
         user = User.query.filter_by(email=form.openid.data).first()
         if user is None:
-            flash('Invalid login. Please try again.')
-            return redirect(url_for('.login'))
+            #flash('Invalid login. Please try again.')
+            #return redirect(url_for('.login'))
+            user = add_user(form.openid.data)
         
         remember_me = False
         if 'remember_me' in session:
@@ -64,16 +66,17 @@ def user(nickname):
     if user == None:
         flash('User %s not found.' % nickname)
         return redirect(url_for('.index'))
-    posts = [
-        {'author': user, 'body': 'Test post #1'},
-        {'author': user, 'body': 'Test post #2'}
-    ]
+    # posts = [
+    #     {'author': user, 'body': 'Test post #1'},
+    #     {'author': user, 'body': 'Test post #2'}
+    # ]
+    posts = user.posts
     return render_template('user.html',
                            user=user,
                            posts=posts)
 
 @bp.route('/edit', methods=['GET', 'POST'])
-@login_required
+@fresh_login_required
 def edit():
     form = EditForm()
     if form.validate_on_submit():
@@ -97,7 +100,7 @@ def logout():
 @app.before_request
 def before_request():
     g.user = current_user
-    if g.user.is_authenticated():
+    if g.user.is_authenticated:
         g.user.last_seen = datetime.utcnow()
         db.session.add(g.user)
         db.session.commit()
@@ -105,3 +108,19 @@ def before_request():
 @lm.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
+def add_user(email):
+    nickname = email.split('@')[0]
+    user = User(nickname=nickname, email=email)
+    db.session.add(user)
+    db.session.commit()
+    return user

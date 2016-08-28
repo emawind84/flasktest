@@ -14,7 +14,18 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
+SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 #SERVER_NAME = ''
 
 app_root = '/microblog'
+
+# mail server settings
+MAIL_SERVER = 'srv56.hosting24.com'
+MAIL_PORT = 587
+MAIL_USERNAME = 'emanuele.disco@emawind.com'
+MAIL_PASSWORD = 'fHre5sdhyJg1'
+MAIL_SECURED = True
+
+# administrator list
+ADMINS = ['emanuele.disco@emawind.com']

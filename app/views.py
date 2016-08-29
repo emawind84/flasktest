@@ -1,8 +1,8 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask_login import login_user, logout_user, current_user, login_required, fresh_login_required
 from app import app, db, lm
-from app.forms import LoginForm, EditForm
-from app.models import User
+from app.forms import LoginForm, EditForm, PostForm
+from app.models import User, Post
 from datetime import datetime
 from flask import Blueprint
 
@@ -12,25 +12,24 @@ bp = Blueprint('microblog', __name__)
 def givemeurl():
     return "The URL for this page is {}".format(url_for('.givemeurl'))
 
-@bp.route('/')
-@bp.route('/index')
+@bp.route('/', methods=['GET', 'POST'])
+@bp.route('/index', methods=['GET', 'POST'])
 @login_required
 def index():
-    user = g.user
-    # posts = [
-    #     { 
-    #         'author': {'nickname': 'John'}, 
-    #         'body': 'Beautiful day in Portland!' 
-    #     },
-    #     { 
-    #         'author': {'nickname': 'Susan'}, 
-    #         'body': 'The Avengers movie was so cool!' 
-    #     }
-    # ]
-    posts = g.user.posts
+    form = PostForm()
+    if form.validate_on_submit():
+        #save the post
+        post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=g.user)
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post is live!')
+        return redirect(url_for('.index'))
+
+    posts = g.user.followed_posts().all()
+
     return render_template('index.html',
                            title='Home',
-                           user=user,
+                           form=form,
                            posts=posts)
 
 @bp.route('/login', methods=['GET', 'POST'])
@@ -78,14 +77,14 @@ def user(nickname):
 @bp.route('/edit', methods=['GET', 'POST'])
 @fresh_login_required
 def edit():
-    form = EditForm()
+    form = EditForm(g.user.nickname)
     if form.validate_on_submit():
         g.user.nickname = form.nickname.data
         g.user.about_me = form.about_me.data
         db.session.add(g.user)
         db.session.commit()
         flash('Your changes have been saved.')
-        return redirect(url_for('.edit'))
+        return redirect(url_for('.user', nickname=g.user.nickname))
     else:
         form.nickname.data = g.user.nickname
         form.about_me.data = g.user.about_me
@@ -96,6 +95,30 @@ def edit():
 def logout():
     logout_user()
     return redirect(url_for('.login'))
+
+@bp.route("/follow/<nickname>")
+@login_required
+def follow(nickname):
+    user = User.query.filter_by(nickname=nickname).first()
+    if user is None:
+        flash('User %s not found.' % nickname)
+        return redirect(url_for('.index'))
+    if user == g.user:
+        flash('You can\'t follow yourself!')
+        return redirect(url_for('.user', nickname=nickname))
+    u = g.user.follow(user)
+    if u is None:
+        flash("Cannot follow " + nickname + ".")
+        return redirect(url_for('.user', nickname=nickname))
+    db.session.add(u)
+    db.session.commit()
+    flash('You are now following ' + nickname + '.')
+    return redirect(url_for('.user', nickname=nickname))
+
+@bp.route("/unfollow/<nickname>")
+@login_required
+def unfollow(nickname):
+    pass
 
 @app.before_request
 def before_request():
@@ -120,7 +143,12 @@ def internal_error(error):
 
 def add_user(email):
     nickname = email.split('@')[0]
+    nickname = User.make_unique_nickname(nickname)
     user = User(nickname=nickname, email=email)
     db.session.add(user)
+    db.session.commit()
+
+    # make the user follow him/herself
+    db.session.add(user.follow(user))
     db.session.commit()
     return user

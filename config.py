@@ -31,3 +31,4 @@ MAIL_SECURED = True
 ADMINS = ['emanuele.disco@emawind.com']
 
 POSTS_PER_PAGE = 3
+MAX_SEARCH_RESULTS = 50

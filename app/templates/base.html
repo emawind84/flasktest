@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
   <head>
     {% if title %}
@@ -11,6 +12,10 @@
         <a href="{{ url_for('.index') }}">Home</a>
         {% if g.user.is_authenticated %}
         | <a href="{{ url_for('.user', nickname=g.user.nickname) }}">Your Profile</a>
+        | <form action="{{ url_for('.search') }}" method="POST" name="search" style="display: inline;" >
+          {{ g.search_form.hidden_tag() }}{{ g.search_form.search(size=20) }}
+          <input type="submit" value="Search" >
+          </form>
         | <a href="{{ url_for('.logout') }}">Logout</a>
         {% endif %}
     </div>

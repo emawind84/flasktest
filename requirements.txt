@@ -30,3 +30,6 @@ Werkzeug==0.11.10
 Whoosh==2.7.4
 WhooshAlchemy==0.1.4
 WTForms==2.1
+
+# Elasticsearch 2.x
+elasticsearch>=2.0.0,<3.0.0

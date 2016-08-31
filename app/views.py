@@ -5,6 +5,7 @@ from app.forms import LoginForm, EditForm, PostForm
 from app.models import User, Post
 from datetime import datetime
 from flask import Blueprint
+from config import POSTS_PER_PAGE
 
 bp = Blueprint('microblog', __name__)
 
@@ -14,8 +15,9 @@ def givemeurl():
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
+@bp.route('/index/<int:page>', methods=['GET', 'POST'])
 @login_required
-def index():
+def index(page=1):
     form = PostForm()
     if form.validate_on_submit():
         #save the post
@@ -25,7 +27,8 @@ def index():
         flash('Your post is live!')
         return redirect(url_for('.index'))
 
-    posts = g.user.followed_posts().all()
+    #posts = g.user.followed_posts().all()
+    posts = g.user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
 
     return render_template('index.html',
                            title='Home',
@@ -59,8 +62,9 @@ def login():
                            providers=app.config['OPENID_PROVIDERS'])
 
 @bp.route('/user/<nickname>')
+@bp.route('/user/<nickname>/<int:page>')
 @login_required
-def user(nickname):
+def user(nickname, page=1):
     user = User.query.filter_by(nickname=nickname).first()
     if user == None:
         flash('User %s not found.' % nickname)
@@ -69,7 +73,7 @@ def user(nickname):
     #     {'author': user, 'body': 'Test post #1'},
     #     {'author': user, 'body': 'Test post #2'}
     # ]
-    posts = user.posts
+    posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
     return render_template('user.html',
                            user=user,
                            posts=posts)

@@ -29,3 +29,5 @@ MAIL_SECURED = True
 
 # administrator list
 ADMINS = ['emanuele.disco@emawind.com']
+
+POSTS_PER_PAGE = 3

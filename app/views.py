@@ -174,7 +174,7 @@ def search():
     ##################################
     '''
     if not g.search_form.validate_on_submit():
-        return redirect(url_for('index'))
+        return redirect(url_for('.index'))
     return redirect(url_for('.search_results', query=g.search_form.search.data))
 
 @bp.route("/search_results/<query>")

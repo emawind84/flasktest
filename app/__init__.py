@@ -5,6 +5,7 @@ from flask_login import LoginManager
 from flask_openid import OpenID
 from config import basedir, app_root
 from elasticsearch import Elasticsearch
+from flask_mail import Mail
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -21,6 +22,8 @@ lm.needs_refresh_message_category = "info"
 oid = OpenID(app, os.path.join(basedir, 'tmp'))
 
 es = Elasticsearch()
+
+mail = Mail(app)
 
 import app_logging
 

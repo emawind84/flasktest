@@ -25,7 +25,8 @@ MAIL_SERVER = 'srv56.hosting24.com'
 MAIL_PORT = 587
 MAIL_USERNAME = 'emanuele.disco@emawind.com'
 MAIL_PASSWORD = 'fHre5sdhyJg1'
-MAIL_SECURED = True
+MAIL_USE_TLS = True
+MAIL_USE_SSL = False
 
 # administrator list
 ADMINS = ['emanuele.disco@emawind.com']

@@ -1,5 +1,5 @@
 from app import app
-from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_SECURED
+from config import basedir, ADMINS, MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_USE_TLS
 
 if not app.debug:
     import logging
@@ -8,7 +8,7 @@ if not app.debug:
     secured = None
     if MAIL_USERNAME or MAIL_PASSWORD:
         credentials = (MAIL_USERNAME, MAIL_PASSWORD)
-    if MAIL_SECURED:
+    if MAIL_USE_TLS:
         secured = ()
     mail_handler = SMTPHandler((MAIL_SERVER, MAIL_PORT), 'no-reply@emawind.com', ADMINS, 'microblog failure', credentials=credentials, secure=secured)
     mail_handler.setLevel(logging.ERROR)
